@@ -98,12 +98,23 @@ final class Settings: ObservableObject {
     }
 
     private init() {
+        Self.migrateFromSlackPolish(into: defaults)
         suggestionCount = defaults.object(forKey: "suggestionCount") as? Int ?? 3
         provider = Provider(rawValue: defaults.string(forKey: "provider") ?? "") ?? .claude
         defaultTone = Tone(rawValue: defaults.string(forKey: "defaultTone") ?? "") ?? .professional
         customInstructions = defaults.string(forKey: "customInstructions") ?? ""
         showFloatingButton = defaults.object(forKey: "showFloatingButton") as? Bool ?? true
         ollamaURL = defaults.string(forKey: "ollamaURL") ?? "http://localhost:11434"
+    }
+
+    /// The app was called Slack Polish before; copy its preferences once.
+    private static func migrateFromSlackPolish(into defaults: UserDefaults) {
+        guard !defaults.bool(forKey: "migratedFromSlackPolish") else { return }
+        for (key, value) in defaults.persistentDomain(forName: "com.local.slackpolish") ?? [:]
+        where defaults.object(forKey: key) == nil {
+            defaults.set(value, forKey: key)
+        }
+        defaults.set(true, forKey: "migratedFromSlackPolish")
     }
 
     func model(for provider: Provider) -> String {

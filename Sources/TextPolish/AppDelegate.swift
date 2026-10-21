@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Slack Polish")
+        statusItem.button?.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Text Polish")
 
         let menu = NSMenu()
         let polish = NSMenuItem(title: "Polish Slack draft  ⌘⇧P", action: #selector(menuPolish), keyEquivalent: "")
@@ -83,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.target = self
         menu.addItem(settings)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit Slack Polish", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Text Polish", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
@@ -111,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Slack Polish Settings"
+            window.title = "Text Polish Settings"
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView())
             window.center()

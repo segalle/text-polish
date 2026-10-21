@@ -1,99 +1,115 @@
-# Slack Polish
+# Text Polish
 
-A small macOS menu-bar app that rewrites your Slack draft with Claude, OpenAI or a local
-Ollama model, then puts it back in the message box only after you approve it. It never sends
-a message.
+A small macOS menu-bar app that rewrites what you're typing with Claude, OpenAI or a local
+Ollama model, and puts the rewrite back only after you approve it. It never sends anything.
 
-- **✨ button** pinned to the right edge of Slack's message box whenever it has focus.
-- **⌘⇧P** while Slack is in front. The shortcut is only registered while Slack is the active
-  app, so ⌘⇧P still works normally in VS Code and everywhere else.
-- **Preview panel**: original draft, 1–3 suggestions as separate cards (click one to pick it,
-  then edit it in place), tone picker (Professional, Friendly, Concise, Fix grammar),
-  Copy / Cancel / Replace draft. Only the picked suggestion goes into Slack. `Esc` cancels.
-- **Keys in the Keychain**: one generic-password item per provider, service
-  `com.local.slackpolish`. Other settings are in `UserDefaults`.
+**Supported apps today: the Slack desktop app.** More apps are planned. The approach (macOS
+Accessibility) works for any app with a standard text box.
 
-No Slack app, OAuth or workspace admin approval is needed. It works on the Slack desktop app
-through macOS Accessibility.
+- **✨ button** pinned to the right edge of the message box whenever it has focus.
+- **⌘⇧P** while Slack is in front. The shortcut is only active while Slack is the frontmost
+  app, so ⌘⇧P keeps working normally in VS Code and everywhere else.
+- **Preview panel**: your original text, 1–3 suggestions as separate cards (click one to pick
+  it, edit it in place), a tone picker (Professional, Friendly, Concise, Fix grammar), and
+  Copy / Cancel / Replace draft. Only the picked suggestion goes back into the app.
+- **Your own keys, kept in the macOS Keychain.** Nothing goes anywhere except the model provider
+  you choose, and nothing leaves your Mac at all with Ollama.
 
-## Build and install
+No Slack app, OAuth or workspace-admin approval is needed.
 
-Requires macOS 13+ and the Swift toolchain (Xcode or just the Command Line Tools).
+## Install
+
+Requirements: macOS 13 or later, and Apple's Swift toolchain. Xcode works; the free Command Line
+Tools are enough:
 
 ```bash
-./scripts/install.sh   # build, replace /Applications/SlackPolish.app, relaunch
+xcode-select --install   # skip if you already have Xcode or the Command Line Tools
 ```
 
-Use `install.sh` for every rebuild too. It also clears the previous build's Accessibility
-grant, which macOS otherwise keeps pinned to the old build (see Known limits).
+Then build and install:
 
-## First run
+```bash
+git clone https://github.com/segalle/text-polish.git
+cd text-polish
+./scripts/install.sh
+```
 
-1. **Accessibility.** On launch macOS asks for Accessibility access. Enable **Slack Polish** in
-   System Settings → Privacy & Security → Accessibility. It is needed to find Slack's message
-   box, read the draft and paste the rewrite.
-2. **Settings** (menu bar ✨ → Settings…): pick a provider, paste your API key, Save.
-   - Claude: create a key at console.anthropic.com. API usage is billed separately from
-     Claude Pro/Max subscriptions.
-   - OpenAI: create a key at platform.openai.com. Also billed separately from ChatGPT Plus.
-   - Ollama: no key. Run `ollama pull llama3.2` and keep Ollama running. Drafts never leave
-     your Mac.
-3. Optional: set a default tone and your own style notes ("American English, no exclamation
-   marks").
+`install.sh` builds the app, copies it to `/Applications/TextPolish.app` and opens it. Run it
+again whenever you pull new changes.
+
+### First run
+
+1. **Allow Accessibility.** macOS asks the first time. Turn on **Text Polish** in System Settings
+   → Privacy & Security → Accessibility. It's how the app finds the message box, reads your
+   draft and pastes the rewrite. If no prompt appears, add `/Applications/TextPolish.app` there
+   with **+**.
+2. **Add a model.** Click the ✨ icon in the menu bar → **Settings…**, choose a provider, paste
+   your API key and click **Save**, then pick a model from the dropdown.
+   - **Claude**: get a key at [console.anthropic.com](https://console.anthropic.com). API usage
+     is billed separately from Claude Pro/Max subscriptions.
+   - **OpenAI**: get a key at [platform.openai.com](https://platform.openai.com). Also billed
+     separately from ChatGPT Plus.
+   - **Ollama**: no key and no cost. Install [Ollama](https://ollama.com), run
+     `ollama pull llama3.2`, and keep it running.
+3. **Optional:** set a default tone, how many suggestions you want, and your own style notes
+   (for example "American English. No exclamation marks.").
+4. Quit and reopen Slack once, so it exposes its message box to Accessibility.
 
 ## Use
 
-Type in Slack → click ✨ (or press ⌘⇧P) → check or edit the rewrite → **Replace draft**.
-Undo in Slack with ⌘Z if you change your mind.
+Type in Slack → click ✨ (or press ⌘⇧P) → pick a suggestion and edit it if you like →
+**Replace draft** (or press Return). `Esc` cancels. Undo in Slack with ⌘Z.
 
 ## Models
 
-The Model dropdown in Settings lists the models your key (or local Ollama) can use, fetched
-live; ↻ refreshes it and "Custom…" takes any model ID.
+The Model dropdown lists the models your key (or your local Ollama) can use, fetched live. ↻
+refreshes the list, and **Custom…** takes any model ID.
 
 | Provider | Default model | Notes |
 |---|---|---|
-| Claude | `claude-opus-5-5` (low effort) | `claude-haiku-5-5` is far cheaper and fine for short messages |
+| Claude | `claude-opus-5-5` (low effort) | `claude-haiku-5-5` is far cheaper and plenty for short messages |
 | OpenAI | `gpt-5-mini` | Any chat-completions model |
 | Ollama | `llama3.2` | Any model you've pulled |
+
+## Troubleshooting
+
+- **No menu-bar icon.** macOS hides menu-bar icons behind the camera notch when the bar is full,
+  and macOS 26 can turn icons off in System Settings → Menu Bar. Opening Text Polish again from
+  Spotlight shows Settings either way.
+- **No ✨ button in Slack.** Check that Settings shows "Accessibility access is on" and that "Show
+  the ✨ button" is on, then quit and reopen Slack once.
+- **Worked before, stopped after a rebuild.** See "Rebuilding" below. Run `./scripts/install.sh`
+  rather than copying the app by hand.
+- **A beep and nothing happens.** The cursor isn't in a message box, or the box is empty.
+- **"rejected the API key" / "doesn't know that model".** Fix the key or the model in Settings.
+
+## Known limits
+
+- **Mentions come back as plain text.** A linked `@name` is read as the text `@name`, and Slack
+  may not re-link it after the paste. Re-type the mention if needed.
+- **Rich formatting is read as plain text.** Slack markdown in the rewrite (`*bold*`,
+  `` `code` ``) is converted again when pasted.
+- **Rebuilding needs a new Accessibility grant.** The build is signed ad hoc, so macOS treats each
+  build as a new app, and switching the old entry off and on does *not* move the permission over.
+  `install.sh` clears the old entry so macOS asks again. With an Apple Development certificate
+  the permission survives rebuilds:
+  `SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./scripts/install.sh`.
+- **Button position** comes from Slack's accessibility frame. If a Slack update moves things,
+  adjust the offset in `FloatingButtonController.tick()`.
 
 ## How it works
 
 | File | Role |
 |---|---|
-| `SlackAccessibility.swift` | Finds Slack's focused text input (`AXFocusedUIElement`), its frame, reads `AXValue`, and replaces it by select-all + paste. Switches on `AXManualAccessibility`, which Electron apps like Slack need before they expose their UI tree. |
-| `FloatingButton.swift` | Non-activating panel that follows the message box (polls every 0.3s, only while Slack is in front), so clicking it never takes focus from Slack. |
-| `PreviewPanel.swift` | The approve-before-replace panel. |
-| `Polisher.swift` | Prompt and HTTP calls: Claude Messages API, OpenAI-compatible chat completions (OpenAI and Ollama). |
-| `HotKey.swift` | Carbon global hotkey, registered only while Slack is frontmost. |
-| `ModelCatalog.swift` | Fetches the model dropdown from each provider's models endpoint. |
-| `EditShortcuts.swift` | ⌘X/C/V/A/Z in our windows. A menu-bar app has no Edit menu, which is what normally handles them. |
-| `Keychain.swift`, `Settings.swift`, `SettingsView.swift` | Configuration. |
+| `SlackAccessibility.swift` | Finds Slack's focused text box (`AXFocusedUIElement`) and its frame, reads `AXValue`, and replaces the text by select-all + paste. Turns on `AXManualAccessibility`, which Electron apps like Slack need before they expose their UI. |
+| `FloatingButton.swift` | A panel that never takes focus and follows the message box (checks every 0.3 s, only while Slack is in front). |
+| `PreviewPanel.swift` | The approve-before-replace panel with suggestion cards. |
+| `Polisher.swift` | The prompt and HTTP calls: the Claude Messages API, and OpenAI-compatible chat completions for OpenAI and Ollama. |
+| `ModelCatalog.swift` | Fills the model dropdown from each provider's models endpoint. |
+| `HotKey.swift` | The ⌘⇧P global hotkey, registered only while Slack is in front. |
+| `EditShortcuts.swift` | ⌘X/C/V/A/Z in the app's windows. A menu-bar app has no Edit menu, which normally handles them. |
+| `Keychain.swift`, `Settings.swift`, `SettingsView.swift` | Configuration. API keys are Keychain items under service `com.local.textpolish`; everything else is in `UserDefaults`. |
 
-Replacement pastes instead of setting `AXValue` directly. Slack's rich-text editor tends to ignore
-or desync on a direct value set, but it handles a paste like normal typing, including ⌘Z undo.
-Your clipboard is saved and restored around the paste.
-
-## Known limits
-
-- **Mentions turn into plain text.** A linked `@Erez` in the draft is read back as the text
-  `@Erez`. After pasting, Slack may not re-link it. Re-type the mention if needed.
-- **Formatting**: rich formatting is read as plain text. Slack markdown in the rewrite
-  (`*bold*`, `` `code` ``) gets converted again on paste.
-- **Rebuilding needs a new Accessibility grant** with the default ad-hoc signature: each build
-  is a new identity to macOS, and switching the old list entry off and on does *not* move the
-  grant to the new build. `install.sh` clears the stale entry so macOS asks again. To avoid this,
-  build with a stable identity: `SIGN_IDENTITY="Apple Development: …" ./scripts/install.sh`.
-- **Button position** comes from Slack's accessibility frame. If a Slack update moves things,
-  adjust the offset in `FloatingButtonController.tick()`.
-
-## Troubleshooting
-
-- **No menu-bar icon**: macOS hides menu-bar overflow behind the notch, and macOS 26 can turn
-  icons off in System Settings → Menu Bar. Opening the app again (Spotlight → Slack Polish)
-  shows Settings either way.
-- **Beep, nothing happens**: either the cursor isn't in a Slack message box or the draft is empty.
-  Click into the box first.
-- **No ✨ button**: check Accessibility access (Settings shows a status line), and that "Show the
-  ✨ button" is on. Quit and reopen Slack once after granting access.
-- **"rejected the API key" / "doesn't know that model"**: fix the key or model name in Settings.
+The rewrite is pasted rather than written into the text box directly. Slack's rich-text editor
+tends to ignore or desync on a direct write, but handles a paste like normal typing, including
+⌘Z undo. Your clipboard is saved and restored around the paste.

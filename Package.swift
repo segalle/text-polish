@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "SlackPolish",
+    name: "TextPolish",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "SlackPolish",
-            path: "Sources/SlackPolish",
+            name: "TextPolish",
+            path: "Sources/TextPolish",
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("ApplicationServices"),
