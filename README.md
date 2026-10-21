@@ -21,10 +21,11 @@ through macOS Accessibility.
 Requires macOS 13+ and the Swift toolchain (Xcode or just the Command Line Tools).
 
 ```bash
-./scripts/build-app.sh          # -> build/SlackPolish.app
-cp -R build/SlackPolish.app /Applications/
-open /Applications/SlackPolish.app
+./scripts/install.sh   # build, replace /Applications/SlackPolish.app, relaunch
 ```
+
+Use `install.sh` for every rebuild too. It also clears the previous build's Accessibility
+grant, which macOS otherwise keeps pinned to the old build (see Known limits).
 
 ## First run
 
@@ -79,14 +80,18 @@ Your clipboard is saved and restored around the paste.
   `@Erez`. After pasting, Slack may not re-link it. Re-type the mention if needed.
 - **Formatting**: rich formatting is read as plain text. Slack markdown in the rewrite
   (`*bold*`, `` `code` ``) gets converted again on paste.
-- **Rebuilding resets Accessibility** with the default ad-hoc signature. Toggle Slack Polish off
-  and on in the Accessibility list after each rebuild, or build with a stable identity:
-  `SIGN_IDENTITY="Apple Development: …" ./scripts/build-app.sh`.
+- **Rebuilding needs a new Accessibility grant** with the default ad-hoc signature: each build
+  is a new identity to macOS, and switching the old list entry off and on does *not* move the
+  grant to the new build. `install.sh` clears the stale entry so macOS asks again. To avoid this,
+  build with a stable identity: `SIGN_IDENTITY="Apple Development: …" ./scripts/install.sh`.
 - **Button position** comes from Slack's accessibility frame. If a Slack update moves things,
   adjust the offset in `FloatingButtonController.tick()`.
 
 ## Troubleshooting
 
+- **No menu-bar icon**: macOS hides menu-bar overflow behind the notch, and macOS 26 can turn
+  icons off in System Settings → Menu Bar. Opening the app again (Spotlight → Slack Polish)
+  shows Settings either way.
 - **Beep, nothing happens**: either the cursor isn't in a Slack message box or the draft is empty.
   Click into the box first.
 - **No ✨ button**: check Accessibility access (Settings shows a status line), and that "Show the

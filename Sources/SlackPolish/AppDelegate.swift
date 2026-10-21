@@ -30,6 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Opening the app again (Finder, Spotlight, `open`) shows Settings, which also helps
+    /// when macOS hides the menu-bar icon behind the notch.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showSettings()
+        return false
+    }
+
     /// Track Slack only while it is in front: the button polls and the hotkey is live just then.
     @objc private func frontmostAppChanged() {
         if SlackAccessibility.frontmostSlack != nil {
