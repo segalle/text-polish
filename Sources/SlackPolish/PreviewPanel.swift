@@ -4,7 +4,8 @@ import SwiftUI
 @MainActor
 final class PreviewModel: ObservableObject {
     @Published var original: String
-    @Published var rewrite = ""
+    @Published var options: [String] = []
+    @Published var selected = 0
     @Published var tone: Tone
     @Published var isLoading = false
     @Published var error: String?
@@ -26,7 +27,8 @@ final class PreviewModel: ObservableObject {
             do {
                 let result = try await Polisher.polish(draft, tone: tone, settings: Settings.shared)
                 guard !Task.isCancelled else { return }
-                rewrite = result
+                options = result
+                selected = 0
             } catch {
                 guard !Task.isCancelled else { return }
                 self.error = error.localizedDescription
@@ -37,6 +39,11 @@ final class PreviewModel: ObservableObject {
 
     func cancel() {
         task?.cancel()
+    }
+
+    /// The chosen suggestion, including any edits the user made to it.
+    var chosen: String {
+        options.indices.contains(selected) ? options[selected] : ""
     }
 }
 
@@ -52,7 +59,7 @@ final class PreviewPanelController {
         self.model = model
 
         let width: CGFloat = 480
-        let height: CGFloat = 360
+        let height: CGFloat = Settings.shared.suggestionCount > 1 ? 480 : 360
         let panel = NonActivatingPanel(contentRect: NSRect(x: 0, y: 0, width: width, height: height), canBecomeKey: true)
         let view = PreviewView(
             model: model,
@@ -126,18 +133,24 @@ private struct PreviewView: View {
             }
             .frame(maxHeight: 70)
 
-            Text("Rewrite")
+            Text(model.options.count > 1 ? "Suggestions: pick one, edit it if needed" : "Rewrite")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             ZStack {
-                TextEditor(text: $model.rewrite)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.3)))
-                    .opacity(model.isLoading ? 0.4 : 1)
-                    .disabled(model.isLoading)
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(model.options.indices, id: \.self) { index in
+                            OptionCard(
+                                text: $model.options[index],
+                                isSelected: index == model.selected,
+                                onSelect: { model.selected = index }
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(model.isLoading ? 0.4 : 1)
+                .disabled(model.isLoading)
                 if model.isLoading {
                     ProgressView("Polishing…")
                         .controlSize(.small)
@@ -156,15 +169,15 @@ private struct PreviewView: View {
             HStack {
                 Button("Copy") {
                     NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(model.rewrite, forType: .string)
+                    NSPasteboard.general.setString(model.chosen, forType: .string)
                 }
-                .disabled(model.rewrite.isEmpty || model.isLoading)
+                .disabled(model.chosen.isEmpty || model.isLoading)
                 Spacer()
                 Button("Cancel", action: onCancel)
                     .keyboardShortcut(.cancelAction)
-                Button("Replace draft") { onReplace(model.rewrite) }
+                Button("Replace draft") { onReplace(model.chosen) }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(model.rewrite.isEmpty || model.isLoading)
+                    .disabled(model.chosen.isEmpty || model.isLoading)
             }
         }
         .padding(14)
@@ -172,6 +185,38 @@ private struct PreviewView: View {
         .background(
             VisualEffect()
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+        )
+    }
+}
+
+/// One suggestion. The selected card is editable; the others are a click away from being chosen.
+private struct OptionCard: View {
+    @Binding var text: String
+    let isSelected: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        Group {
+            if isSelected {
+                TextEditor(text: $text)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 70, maxHeight: 160)
+            } else {
+                Text(text)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: onSelect)
+            }
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: isSelected ? 2 : 1)
         )
     }
 }

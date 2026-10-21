@@ -7,8 +7,9 @@ a message.
 - **✨ button** pinned to the right edge of Slack's message box whenever it has focus.
 - **⌘⇧P** while Slack is in front. The shortcut is only registered while Slack is the active
   app, so ⌘⇧P still works normally in VS Code and everywhere else.
-- **Preview panel**: original draft, editable rewrite, tone picker (Professional, Friendly,
-  Concise, Fix grammar), Copy / Cancel / Replace draft. `Esc` cancels, `Return` replaces.
+- **Preview panel**: original draft, 1–3 suggestions as separate cards (click one to pick it,
+  then edit it in place), tone picker (Professional, Friendly, Concise, Fix grammar),
+  Copy / Cancel / Replace draft. Only the picked suggestion goes into Slack. `Esc` cancels.
 - **Keys in the Keychain**: one generic-password item per provider, service
   `com.local.slackpolish`. Other settings are in `UserDefaults`.
 
@@ -46,7 +47,10 @@ Undo in Slack with ⌘Z if you change your mind.
 
 ## Models
 
-| Provider | Default model | Change it in Settings → Model |
+The Model dropdown in Settings lists the models your key (or local Ollama) can use, fetched
+live; ↻ refreshes it and "Custom…" takes any model ID.
+
+| Provider | Default model | Notes |
 |---|---|---|
 | Claude | `claude-opus-5-5` (low effort) | `claude-haiku-5-5` is far cheaper and fine for short messages |
 | OpenAI | `gpt-5-mini` | Any chat-completions model |
@@ -61,6 +65,8 @@ Undo in Slack with ⌘Z if you change your mind.
 | `PreviewPanel.swift` | The approve-before-replace panel. |
 | `Polisher.swift` | Prompt and HTTP calls: Claude Messages API, OpenAI-compatible chat completions (OpenAI and Ollama). |
 | `HotKey.swift` | Carbon global hotkey, registered only while Slack is frontmost. |
+| `ModelCatalog.swift` | Fetches the model dropdown from each provider's models endpoint. |
+| `EditShortcuts.swift` | ⌘X/C/V/A/Z in our windows. A menu-bar app has no Edit menu, which is what normally handles them. |
 | `Keychain.swift`, `Settings.swift`, `SettingsView.swift` | Configuration. |
 
 Replacement pastes instead of setting `AXValue` directly. Slack's rich-text editor tends to ignore

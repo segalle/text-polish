@@ -24,6 +24,15 @@ enum Provider: String, CaseIterable, Identifiable {
     }
 
     var needsAPIKey: Bool { self != .ollama }
+
+    /// Shown when the provider's model list can't be fetched (no key yet, offline).
+    var fallbackModels: [String] {
+        switch self {
+        case .claude: return ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
+        case .openai: return ["gpt-5-mini", "gpt-5"]
+        case .ollama: return ["llama3.2"]
+        }
+    }
 }
 
 enum Tone: String, CaseIterable, Identifiable {
@@ -83,7 +92,13 @@ final class Settings: ObservableObject {
         didSet { defaults.set(ollamaURL, forKey: "ollamaURL") }
     }
 
+    /// How many alternative rewrites to ask for (1–3).
+    @Published var suggestionCount: Int {
+        didSet { defaults.set(suggestionCount, forKey: "suggestionCount") }
+    }
+
     private init() {
+        suggestionCount = defaults.object(forKey: "suggestionCount") as? Int ?? 3
         provider = Provider(rawValue: defaults.string(forKey: "provider") ?? "") ?? .claude
         defaultTone = Tone(rawValue: defaults.string(forKey: "defaultTone") ?? "") ?? .professional
         customInstructions = defaults.string(forKey: "customInstructions") ?? ""

@@ -23,6 +23,10 @@ final class NonActivatingPanel: NSPanel {
     private let allowsKey: Bool
     override var canBecomeKey: Bool { allowsKey }
     override var canBecomeMain: Bool { false }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        EditShortcuts.handle(event) || super.performKeyEquivalent(with: event)
+    }
 }
 
 /// Watches Slack's focused composer and pins a small ✨ button to its right edge.

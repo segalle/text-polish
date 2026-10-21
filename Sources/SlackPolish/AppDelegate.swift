@@ -98,7 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showSettings() {
         if settingsWindow == nil {
-            let window = NSWindow(
+            let window = EditableWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 480, height: 520),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
